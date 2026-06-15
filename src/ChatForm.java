@@ -13,6 +13,8 @@ public class ChatForm {
     private JTextField messageField;
     private JButton sendButton;
     private JTextArea chatArea;
+    public DefaultListModel<String> listModel = new DefaultListModel<>();
+
 
     private Socket socket;
     private PrintWriter writer;
@@ -24,26 +26,14 @@ public class ChatForm {
         reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         sendButton.addActionListener(e -> sendMessage());
         messageField.addActionListener(e -> sendMessage());//standard messageFiled action is press enter
-
-        new Thread(()-> {
-            try{
-                String mes;
-                while ((mes = reader.readLine()) != null){
-                    chatArea.append(mes + "\n");
-                }
-
-            } catch (Exception e){
-                e.printStackTrace();
-            }
-
-
-        }).start();
+        new Thread(new ClientReceiver(this, reader)).start();
+        userList.setModel(listModel);
+        writer.println("/get online");
     }
 
     public void sendMessage() {
         String text = messageField.getText().trim();
         if (!text.isEmpty()) {
-//            chatArea.append(text + "\n");//show on display
             writer.println(text);
             messageField.setText("");//clear
             messageField.requestFocus();//returns focus to message field
@@ -53,6 +43,28 @@ public class ChatForm {
     public JPanel getMainPanel(){
         return this.panel1;
     }
+
+    public void send(String message){
+        this.chatArea.append(message + "\n");
+    }
+
+    public void addUser(String user){
+        this.listModel.addElement(user);
+    }
+    public void removeUser(String user){
+        this.listModel.removeElement(user);
+    }
+    public void clearUsers(){
+        this.listModel.clear();
+    }
+
+    public void updateOnline(String[] online){
+        clearUsers();
+        for(String onl : online){
+            this.listModel.addElement(onl);
+        }
+    }
+
 
 
 }
